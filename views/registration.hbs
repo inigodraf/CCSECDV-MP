@@ -2,21 +2,34 @@
 <div id="content">
     <div id="spacer"></div>
     <div class="post-card">
-        <h1>Register:</h1>
-        <form action="create-user" method="post">
-            <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="user" required>
+        <h1>Sign up:</h1>
+        <form action="/register" method="post" enctype="multipart/form-data" onsubmit="return validateForm(event);">
+        <div class="form-group">
+                <label for="profile_photo">Profile Photo:</label>
+                <input type="file" id="profile_photo" name="profile_photo" accept="image/*">
             </div>
-            <div class="form-group">                       
+            <div class="form-group">
+                <label for="full_name">Name:</label>
+                <input type="text" id="full_name" name="full_name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number:</label>
+                <input type="text" id="phone" name="phone" required>
+            </div>
+            
+            <div class="form-group">
                 <label for="password">Password:</label>
-                <input type="password" id="password" name="pass" required>
+                <input type="password" id="password" name="password" required minlength="8">
             </div>
             <div class="form-group">
-                <label for="confirm-password">Confirm Password:</label>
-                <input type="password" id="confirm-password" name="passconf" required>
+                <label for="confirm_password">Confirm Password:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required>
             </div>
-            <button type="submit" class="btn">Register</button>
+            <button type="submit" class="btn">Sign up</button>
         </form>
     </div>
     <div id="spacer"></div>

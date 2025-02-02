@@ -1,4 +1,5 @@
 const express = require('express');
+const session = require('express-session');
 const multer = require('multer');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
@@ -51,12 +52,17 @@ const limiter = rateLimit({
 });
 
 function init(server) {
-    let logged_in = "";
-
+    server.use(session({
+        secret: 'secureSessionKey',
+        resave: false,
+        saveUninitialized: true,
+        cookie: { secure: false }
+    }));
+    
     server.use('/read-user', limiter);
 
     server.get('/', function(req, resp) {
-        if (logged_in === "") {
+        if (!req.session.logged_in) {
             resp.redirect('/register');
         } else {
             postModel.find({}).lean().then(function(post_data) {
@@ -64,9 +70,10 @@ function init(server) {
                     layout: 'index',
                     title: 're*curate',
                     style: 'main.css',
-                    post_data: post_data
+                    post_data: post_data,
+                    user: req.session.user
                 });
-            })
+            });
         }
     });
 
@@ -79,27 +86,42 @@ function init(server) {
     });
 
     server.post('/register', upload.single('profile_photo'), (req, resp) => {
-        const { full_name, email, phone, password } = req.body;
+        if (!req.body.full_name || !req.body.email || !req.body.password) {
+            return resp.status(400).json({ success: false, message: "Invalid request. Form must be submitted manually." });
+        }
+    
+        const { full_name, email, phone, password, confirm_password } = req.body;
         const profilePhoto = req.file ? `/uploads/${req.file.filename}` : '';
-        
-        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !/^\d{10}$/.test(phone)) {
-            return resp.send('Invalid email or phone number format.');
+    
+        if (!email.match(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)) {
+            return resp.json({ success: false, message: 'Invalid email format.' });
+        }
+    
+        if (!phone.match(/^\d{10}$/)) {
+            return resp.json({ success: false, message: 'Invalid phone number format. It must be 10 digits.' });
+        }
+    
+        if (password !== confirm_password) {
+            return resp.json({ success: false, message: 'Passwords do not match.' });
         }
     
         bcrypt.hash(password, saltRounds, function(err, hash) {
-            if (err) return resp.send('Error hashing password.');
-            
+            if (err) return resp.json({ success: false, message: 'Error hashing password.' });
+    
             db.run(`INSERT INTO users (full_name, email, phone, profile_photo, password) VALUES (?, ?, ?, ?, ?)`,
                 [full_name, email, phone, profilePhoto, hash],
                 function (err) {
                     if (err) {
-                        return resp.send('Error: ' + err.message);
+                        return resp.json({ success: false, message: 'Error: ' + err.message });
                     }
-                    resp.redirect('/login');
+                    req.session.logged_in = true;
+                    req.session.user = full_name;
+                    resp.json({ success: true, redirect: '/' });
                 }
             );
         });
     });
+    
 
     server.get('/login', function(req, resp) {
         resp.render('login', {
@@ -124,7 +146,8 @@ function init(server) {
     
             bcrypt.compare(pass, login.pass, function(err, result) {
                 if (result) {
-                    logged_in = user;
+                    req.session.logged_in = true;
+                    req.session.user = user;
                     resp.redirect('/');
                 } else {
                     resp.render('dialog', {
@@ -139,4 +162,4 @@ function init(server) {
     });
 }
 
-module.exports.init = init; // ✅ Only exporting init, no `app.listen()`
+module.exports.init = init;
