@@ -1,16 +1,60 @@
+const express = require('express');
+const multer = require('multer');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit');
 const datamodel = require('../models/datamodel');
 datamodel.init();
 postModel = datamodel.postModel;
 loginModel = datamodel.loginModel;
+
+const saltRounds = 10;
 
 function errorFn(err) {
     console.log('Error found. Please trace!');
     console.log(err);
 }
 
-// TODO
+const db = new sqlite3.Database('./users.db', (err) => {
+    if (err) console.error(err.message);
+    console.log('Connected to the users database.');
+});
+
+db.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    full_name TEXT,
+    email TEXT UNIQUE,
+    phone TEXT,
+    profile_photo TEXT,
+    password TEXT
+)`);
+
+const storage = multer.diskStorage({
+    destination: './public/uploads/',
+    filename: (req, file, cb) => {
+        const filetypes = /jpeg|jpg|png/;
+        const mimetype = filetypes.test(file.mimetype);
+        if (mimetype) {
+            cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+        } else {
+            return cb(new Error('Invalid file type')); 
+        }
+    }
+});
+const upload = multer({ storage: storage });
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, 
+    max: 5, 
+    message: 'Too many login attempts, please try again later.'
+});
+
 function init(server) {
     let logged_in = "";
+
+    server.use('/read-user', limiter);
+
     server.get('/', function(req, resp) {
         if (logged_in === "") {
             resp.redirect('/register');
@@ -25,6 +69,7 @@ function init(server) {
             })
         }
     });
+
     server.get('/register', function(req, resp) {
         resp.render('registration', {
             layout: 'index',
@@ -32,6 +77,30 @@ function init(server) {
             style: 'form.css'
         });
     });
+
+    server.post('/register', upload.single('profile_photo'), (req, resp) => {
+        const { full_name, email, phone, password } = req.body;
+        const profilePhoto = req.file ? `/uploads/${req.file.filename}` : '';
+        
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !/^\d{10}$/.test(phone)) {
+            return resp.send('Invalid email or phone number format.');
+        }
+    
+        bcrypt.hash(password, saltRounds, function(err, hash) {
+            if (err) return resp.send('Error hashing password.');
+            
+            db.run(`INSERT INTO users (full_name, email, phone, profile_photo, password) VALUES (?, ?, ?, ?, ?)`,
+                [full_name, email, phone, profilePhoto, hash],
+                function (err) {
+                    if (err) {
+                        return resp.send('Error: ' + err.message);
+                    }
+                    resp.redirect('/login');
+                }
+            );
+        });
+    });
+
     server.get('/login', function(req, resp) {
         resp.render('login', {
             layout: 'index',
@@ -39,77 +108,35 @@ function init(server) {
             style: 'form.css'
         });
     });
-    server.get('/review', function(req, resp) {
-        resp.render('review', {
-            layout: 'index',
-            title: 'write a review',
-            style: 'review.css'
-        });
-    });
-    server.get('/profile', function(req, resp) {
-        resp.render('profile', {
-            layout: 'index',
-            title: 'profile',
-            style: 'review.css',
-            user: logged_in
-        });
-    });
-
-    server.post('/create-user', function(req, resp) {
-        if (req.body.pass === req.body.passconf) {
-            const loginInstance = loginModel({
-                user: req.body.user,
-                pass: req.body.pass
-            });
-        
-            loginInstance.save().then(function(login) {
-                console.log('User created');
-                resp.redirect('/login');
-            }).catch(errorFn);
-        } else {
-            resp.render('dialog', {
-                layout: 'index',
-                title: 're*curate',
-                style: 'form.css',
-                message: 'Passwords do not match.'
-            });
-        }
-    });
 
     server.post('/read-user', function(req, resp) {
-        const searchQuery = { user: req.body.user, pass: req.body.pass };
-
-        loginModel.findOne(searchQuery).then(function(login){
-            console.log('Finding user');
-
-            if (login != undefined && login._id != null) {
-                logged_in = req.body.user;
-                resp.redirect('/');
-            } else {
-                resp.render('dialog', {
+        const { user, pass } = req.body;
+    
+        loginModel.findOne({ user }).then(function(login){
+            if (!login) {
+                return resp.render('dialog', {
                     layout: 'index',
                     title: 're*curate',
                     style: 'form.css',
-                    message: 'Username and password do not match.'
+                    message: 'User not found.'
                 });
             }
+    
+            bcrypt.compare(pass, login.pass, function(err, result) {
+                if (result) {
+                    logged_in = user;
+                    resp.redirect('/');
+                } else {
+                    resp.render('dialog', {
+                        layout: 'index',
+                        title: 're*curate',
+                        style: 'form.css',
+                        message: 'Invalid password.'
+                    });
+                }
+            });
         }).catch(errorFn);
-    })
-
-    // TODO: create storepages
-    server.get('/store/:storename', function(req, resp) {
-        const storename = req.params.storename;
-        const searchQuery = { post_store: storename };
-
-        postModel.find(searchQuery).lean().then(function(post_data) {
-            resp.render('store', {
-                layout: 'index',
-                title: storename,
-                style: 'store.css',
-                post_data: post_data
-            })
-        })
-    })
+    });
 }
 
-module.exports.init = init;
+module.exports.init = init; // ✅ Only exporting init, no `app.listen()`
