@@ -1,0 +1,56 @@
+<div>
+  {{> header}}
+  <hr>
+  <div id="content">
+    <aside></aside>
+    <main>
+      <h1 id="store-name">Write a Review</h1>
+      <div class="post-card">
+        <div class="flex-container">
+          <div class="form-element">
+            <label for="title">Review Title:</label>
+            <input type="text" id="title" name="title">
+          </div>
+          <div class="form-element">
+            <label for="image">Image link:</label>
+            <input type="text" id="image" name="image">
+          </div>
+          <div class="form-element">
+            <label for="review">Review:</label>
+            <textarea cols="50" rows="3" id="review" name="review" placeholder="Type your review here..."></textarea>
+          </div>
+        </div>
+        <button type="button" class="btn" id="clear-btn">Clear</button>
+        <button type="button" class="btn" id="submit-btn">Submit</button>
+      </div>
+    </main>
+    <aside></aside>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var clearBtn = document.getElementById('clear-btn');
+    var submitBtn = document.getElementById('submit-btn');
+    var titleInput = document.getElementById('title');
+    var imageInput = document.getElementById('image');
+    var reviewInput = document.getElementById('review');
+
+    clearBtn.addEventListener('click', function() {
+      titleInput.value = '';
+      imageInput.value = '';
+      reviewInput.value = '';
+    });
+
+    submitBtn.addEventListener('click', function() {
+      var title = titleInput.value;
+      var image = imageInput.value;
+      var review = reviewInput.value;
+
+      console.log('Submitted form data:');
+      console.log('Title:', title);
+      console.log('Image:', image);
+      console.log('Review:', review);
+    });
+  });
+</script>
