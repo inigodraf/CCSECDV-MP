@@ -5,10 +5,6 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
-const datamodel = require('../models/datamodel');
-datamodel.init();
-postModel = datamodel.postModel;
-loginModel = datamodel.loginModel;
 
 const saltRounds = 10;
 
@@ -65,7 +61,14 @@ function init(server) {
         if (!req.session.logged_in) {
             resp.redirect('/register');
         } else {
-            postModel.find({}).lean().then(function(post_data) {
+            db.all(`SELECT * FROM users`, [], (err, post_data) => {
+                if (err) {
+                    return resp.render('dialog', {
+                        layout: 'index',
+                        title: 're*curate',
+                        message: 'Database error: ' + err.message
+                    });
+                }
                 resp.render('main', {
                     layout: 'index',
                     title: 're*curate',
@@ -94,34 +97,33 @@ function init(server) {
         const profilePhoto = req.file ? `/uploads/${req.file.filename}` : '';
     
         if (!email.match(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)) {
-            return resp.json({ success: false, message: 'Invalid email format.' });
+            return resp.render('registration', { message: 'Invalid email format.', layout: 'index', title: 'Register' });
         }
     
         if (!phone.match(/^\d{10}$/)) {
-            return resp.json({ success: false, message: 'Invalid phone number format. It must be 10 digits.' });
+            return resp.render('registration', { message: 'Invalid phone number format. It must be 10 digits.', layout: 'index', title: 'Register' });
         }
     
         if (password !== confirm_password) {
-            return resp.json({ success: false, message: 'Passwords do not match.' });
+            return resp.render('registration', { message: 'Passwords do not match.', layout: 'index', title: 'Register' });
         }
     
         bcrypt.hash(password, saltRounds, function(err, hash) {
-            if (err) return resp.json({ success: false, message: 'Error hashing password.' });
+            if (err) return resp.render('registration', { message: 'Error hashing password.', layout: 'index', title: 'Register' });
     
             db.run(`INSERT INTO users (full_name, email, phone, profile_photo, password) VALUES (?, ?, ?, ?, ?)`,
                 [full_name, email, phone, profilePhoto, hash],
                 function (err) {
                     if (err) {
-                        return resp.json({ success: false, message: 'Error: ' + err.message });
+                        return resp.render('registration', { message: 'Error: ' + err.message, layout: 'index', title: 'Register' });
                     }
                     req.session.logged_in = true;
                     req.session.user = full_name;
-                    resp.json({ success: true, redirect: '/' });
+                    resp.redirect('/');
                 }
             );
         });
     });
-    
 
     server.get('/login', function(req, resp) {
         resp.render('login', {
@@ -134,8 +136,17 @@ function init(server) {
     server.post('/read-user', function(req, resp) {
         const { user, pass } = req.body;
     
-        loginModel.findOne({ user }).then(function(login){
-            if (!login) {
+        db.get(`SELECT * FROM users WHERE email = ?`, [user], (err, row) => {
+            if (err) {
+                return resp.render('dialog', {
+                    layout: 'index',
+                    title: 're*curate',
+                    style: 'form.css',
+                    message: 'Database error: ' + err.message
+                });
+            }
+    
+            if (!row) {
                 return resp.render('dialog', {
                     layout: 'index',
                     title: 're*curate',
@@ -144,10 +155,10 @@ function init(server) {
                 });
             }
     
-            bcrypt.compare(pass, login.pass, function(err, result) {
+            bcrypt.compare(pass, row.password, function(err, result) {
                 if (result) {
                     req.session.logged_in = true;
-                    req.session.user = user;
+                    req.session.user = row.full_name;
                     resp.redirect('/');
                 } else {
                     resp.render('dialog', {
@@ -158,7 +169,7 @@ function init(server) {
                     });
                 }
             });
-        }).catch(errorFn);
+        });
     });
 }
 
