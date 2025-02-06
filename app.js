@@ -1,14 +1,17 @@
 // npm init
-// npm i express express-handlebars body-parser mongoose multer sqlite3
+// npm i express express-handlebars body-parser multer sqlite3 express-session bcrypt express-rate-limit
 
 const express = require('express');
+const session = require('express-session');
+const bodyParser = require('body-parser');
+const handlebars = require('express-handlebars');
+
 const server = express();
 
-const bodyParser = require('body-parser');
+// Middleware setup
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
 
-const handlebars = require('express-handlebars');
 server.set('view engine', 'hbs');
 server.engine('hbs', handlebars.engine({
     extname: 'hbs',
@@ -16,14 +19,19 @@ server.engine('hbs', handlebars.engine({
 
 server.use(express.static('public'));
 
-// Import required modules
-const multer = require('multer');
-const sqlite3 = require('sqlite3').verbose();
+// Session management
+server.use(session({
+    secret: 'secureSessionKey',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }
+}));
 
-// Initialize Routes
+// Import and initialize routes
 const routes = require('./controllers/routes');
 routes.init(server);
 
+// Start the server
 const port = process.env.PORT || 3000;
 server.listen(port, function() {
     console.log('Listening at port ' + port);

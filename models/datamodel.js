@@ -1,42 +1,34 @@
-const mongoose = require('mongoose');
-mongoose.connect('mongodb://127.0.0.1:27017/reviewdb');
+const sqlite3 = require('sqlite3').verbose();
 
-// TODO: CREATE SCHEMA
-const loginSchema = new mongoose.Schema({
-    user: { type: String },
-    pass: { type: String }
-}, { versionKey: false });
+const db = new sqlite3.Database('./users.db', (err) => {
+    if (err) console.error(err.message);
+    console.log('Connected to the SQLite database.');
+});
 
-const loginModel = mongoose.model('login', loginSchema)
+db.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    full_name TEXT,
+    email TEXT UNIQUE,
+    phone TEXT,
+    profile_photo TEXT,
+    password TEXT,
+    is_admin INTEGER DEFAULT 0 -- 0 for normal users, 1 for admins
+)`);
 
-// SAMPLE POST SCHEMA
-const postSchema = new mongoose.Schema({
-    post_title: { type: String },
-    post_user: { type: String },
-    post_store: { type: String },
-    post_content: { type: String },
-    post_image: { type: String }
-}, { versionKey: false });
-
-const postModel = mongoose.model('post', postSchema); // NOTE: becomes "posts"
-
-/* SAMPLE (take note of post_data and friend_data):
-postModel.find(searchQuery).lean().then(function(post_data){
-    friendModel.find(searchQuery).lean().then(function(friend_data){
-    resp.render('main',{
-        layout          : 'index',
-        title           : 'Social Media 4 Homepage',
-        'post-data'     : post_data,
-        'friend-data'   : friend_data
-    });
-    }).catch(errorFn);
-}).catch(errorFn);
-*/
+// Create posts table
+db.run(`CREATE TABLE IF NOT EXISTS posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_title TEXT,
+    post_user TEXT,
+    post_store TEXT,
+    post_content TEXT,
+    post_image TEXT
+)`);
 
 function init() {
     function finalClose() {
-        console.log('Close connection at the end!');
-        mongoose.connection.close();
+        console.log('Closing SQLite connection at the end!');
+        db.close();
         process.exit();
     }
 
@@ -45,6 +37,7 @@ function init() {
     process.on('SIGQUIT', finalClose);
 }
 
-module.exports.init = init;
-module.exports.loginModel = loginModel;
-module.exports.postModel = postModel;
+module.exports = {
+    init,
+    db
+};

@@ -2,9 +2,9 @@
 <div id="content">
     <div id="spacer"></div>
     <div class="post-card">
-        <h1>Sign up:</h1>
+        <h1>SIGN UP</h1>
         <form action="/register" method="post" enctype="multipart/form-data" onsubmit="return validateForm(event);">
-        <div class="form-group">
+            <div class="form-group">
                 <label for="profile_photo">Profile Photo:</label>
                 <input type="file" id="profile_photo" name="profile_photo" accept="image/*">
             </div>
@@ -18,9 +18,20 @@
             </div>
             <div class="form-group">
                 <label for="phone">Phone Number:</label>
-                <input type="text" id="phone" name="phone" required>
+                <div class="phone-input-container">
+                    <div class="country-dropdown">
+                        <button type="button" id="country-toggle" class="dropdown-button">+63</button>
+                        <ul id="country-list" class="dropdown-menu">
+                            <li data-dial-code="63" data-country="PH">Philippines (+63)</li>
+                            <li data-dial-code="1" data-country="US">United States (+1)</li>
+                            <li data-dial-code="44" data-country="GB">United Kingdom (+44)</li>
+                            <li data-dial-code="61" data-country="AU">Australia (+61)</li>
+                            <li data-dial-code="1" data-country="CA">Canada (+1)</li>
+                        </ul>
+                    </div>
+                    <input type="tel" id="phone" name="phone" maxlength="10" required>
+                </div>
             </div>
-            
             <div class="form-group">
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required minlength="8">
@@ -34,3 +45,94 @@
     </div>
     <div id="spacer"></div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const countryToggle = document.getElementById("country-toggle");
+        const countryList = document.getElementById("country-list");
+        const phoneInputField = document.getElementById("phone");
+
+        countryToggle.addEventListener("click", function () {
+            countryList.classList.toggle("visible");
+        });
+
+        countryList.addEventListener("click", function (e) {
+            if (e.target.tagName === "LI") {
+                const dialCode = e.target.getAttribute("data-dial-code");
+                countryToggle.textContent = `+${dialCode}`;
+                phoneInputField.placeholder = `${dialCode}`;
+                countryList.classList.remove("visible");
+            }
+        });
+
+        document.addEventListener("click", function (e) {
+            if (!countryList.contains(e.target) && e.target !== countryToggle) {
+                countryList.classList.remove("visible");
+            }
+        });
+    });
+</script>
+
+<style>
+    .phone-input-container {
+        display: flex;
+        align-items: center;
+        width: 87%;
+        position: relative;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 5px;
+        color: #fff; /* Match form text */
+    }
+
+    .country-dropdown {
+        position: relative;
+    }
+
+    .dropdown-button {
+        border: 1px solid #ccc;
+        background: none;
+        padding: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        color: #fff; /* Match form text */
+    }
+
+    .dropdown-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        display: none;
+        z-index: 1000;
+        color: #fff; /* Match form text */
+    }
+
+    .dropdown-menu.visible {
+        display: block;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+
+    .dropdown-menu li {
+        padding: 8px;
+        cursor: pointer;
+        color: #fff; /* Match form text */
+    }
+
+    .dropdown-menu li:hover {
+        background-color: #333; /* Match form text hover */
+    }
+
+    input[type="tel"] {
+        width: calc(100% - 70px);
+        padding-left: 10px;
+        border: none;
+        outline: none;
+        color: #fff; /* Match form text */
+    }
+</style>
