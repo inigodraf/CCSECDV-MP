@@ -363,23 +363,138 @@ function init(server) {
         });
     });
 
-    server.get('/admin', (req, res) => {
+    // Middleware to check if the user is an admin
+    function checkAdmin(req, res, next) {
         if (!req.session.logged_in || !req.session.is_admin) {
             console.log("❌ Unauthorized access to admin panel.");
             return res.status(403).send("Access denied.");
         }
-    
-        console.log("✅ Admin logged in, rendering admin.hbs");
-    
-        res.render('admin', {
-            layout: 'index',
-            title: 'Admin Dashboard',
-            style: 'main.css',
-            user: req.session.user
+        next();
+    }
+
+    /**
+     * ✅ Admin Dashboard (Users & Posts in One Page)
+     */
+    server.get('/admin', checkAdmin, (req, res) => {
+        db.all(`SELECT id, full_name, email FROM users`, [], (err, users) => {
+            if (err) {
+                console.error("❌ Error fetching users:", err.message);
+                return res.status(500).send("Database error while fetching users.");
+            }
+
+            db.all(`SELECT posts.*, users.full_name AS post_user FROM posts 
+                    JOIN users ON posts.user_id = users.id
+                    ORDER BY posts.id DESC`, [], (err, posts) => {
+                if (err) {
+                    console.error("❌ Error fetching posts:", err.message);
+                    return res.status(500).send("Database error while fetching posts.");
+                }
+
+                res.render('admin', {
+                    layout: 'index',
+                    title: 'Admin Dashboard',
+                    style: 'main.css',
+                    user: req.session.user,
+                    users: users,
+                    posts: posts
+                });
+            });
         });
     });
-    
-    
+
+    /**
+     * ✅ Update User (Admin Only - Selective Updates)
+     */
+    server.post('/update-user/:id', checkAdmin, (req, res) => {
+        const userId = req.params.id;
+        const { full_name, email, password } = req.body;
+
+        // Fetch current user data first
+        db.get(`SELECT full_name, email, password FROM users WHERE id = ?`, [userId], (err, user) => {
+            if (err) {
+                console.error("❌ Error fetching user data:", err.message);
+                return res.status(500).send("Error fetching user data.");
+            }
+
+            if (!user) {
+                return res.status(404).send("User not found.");
+            }
+
+            // Use the existing values if the field is not provided
+            const newFullName = full_name.trim() !== '' ? full_name : user.full_name;
+            const newEmail = email.trim() !== '' ? email : user.email;
+            const newPassword = password.trim() !== '' ? bcrypt.hashSync(password, 10) : user.password;
+
+            // Update only modified fields
+            db.run(
+                `UPDATE users SET full_name = ?, email = ?, password = ? WHERE id = ?`,
+                [newFullName, newEmail, newPassword, userId],
+                (updateErr) => {
+                    if (updateErr) {
+                        console.error("❌ Error updating user:", updateErr.message);
+                        return res.status(500).send("Error updating user.");
+                    }
+
+                    console.log(`✅ User ${userId} updated successfully.`);
+                    res.redirect('/admin');
+                }
+            );
+        });
+    });
+
+
+    /**
+     * ✅ Delete User (Admin Only)
+     */
+    server.post('/delete-user/:id', checkAdmin, (req, res) => {
+        const userId = req.params.id;
+
+        db.run(`DELETE FROM users WHERE id = ?`, [userId], (err) => {
+            if (err) {
+                console.error("❌ Error deleting user:", err.message);
+                return res.status(500).send("Error deleting user.");
+            }
+
+            console.log(`✅ User ${userId} deleted successfully.`);
+            res.redirect('/admin');
+        });
+    });
+
+    /**
+     * ✅ Update Post (Admin Only)
+     */
+    server.post('/update-post/:id', checkAdmin, (req, res) => {
+        const postId = req.params.id;
+        const { post_content } = req.body;
+
+        db.run(`UPDATE posts SET post_content = ? WHERE id = ?`, [post_content, postId], (err) => {
+            if (err) {
+                console.error("❌ Error updating post:", err.message);
+                return res.status(500).send("Error updating post.");
+            }
+
+            console.log(`✅ Post ${postId} updated successfully.`);
+            res.redirect('/admin');
+        });
+    });
+
+    /**
+     * ✅ Delete Post (Admin Only)
+     */
+    server.post('/delete-post/:id', checkAdmin, (req, res) => {
+        const postId = req.params.id;
+
+        db.run(`DELETE FROM posts WHERE id = ?`, [postId], (err) => {
+            if (err) {
+                console.error("❌ Error deleting post:", err.message);
+                return res.status(500).send("Error deleting post.");
+            }
+
+            console.log(`✅ Post ${postId} deleted successfully.`);
+            res.redirect('/admin');
+        });
+    });
+
 
     /**
      * ✅ READ-USER ROUTE (FIXED)
@@ -559,8 +674,6 @@ server.post('/update-post/:id', (req, res) => {
     });
 });
 
-    
-    
 
 }
 

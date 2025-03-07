@@ -1,53 +1,71 @@
 {{> adminheader}}
+<h1 class="admin-title">ADMIN DASHBOARD</h1>
 
-<div id="content">
-    <div id="spacer"></div>
-
-    <div class="admin-container">
-        <!-- Left Side: Users List -->
-        <div class="admin-section">
-            <h2>Manage Users</h2>
-            <ul class="user-list">
-                {{#each users}}
-                <li>
-                    <div class="user-info">
-                        <span>{{full_name}} ({{email}})</span>
-                        <div class="admin-actions">
-                            <form action="/edit-user/{{id}}" method="GET">
-                                <button type="submit" class="btn-edit">Edit</button>
-                            </form>
-                            <form action="/delete-user/{{id}}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');">
-                                <button type="submit" class="btn-delete">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                </li>
-                {{/each}}
-            </ul>
-        </div>
-
-        <!-- Right Side: Posts List -->
-        <div class="admin-section">
-            <h2>Manage Posts</h2>
-            <ul class="post-list">
-                {{#each posts}}
-                <li>
-                    <div class="post-info">
-                        <span>{{post_user}}: {{post_content}}</span>
-                        <div class="admin-actions">
-                            <form action="/edit-post/{{id}}" method="GET">
-                                <button type="submit" class="btn-edit">Edit</button>
-                            </form>
-                            <form action="/delete-post/{{id}}" method="POST" onsubmit="return confirm('Are you sure you want to delete this post?');">
-                                <button type="submit" class="btn-delete">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                </li>
-                {{/each}}
-            </ul>
-        </div>
+<div id="admin-container">
+    <!-- Left: User List -->
+    <div class="admin-section admin-users">
+        <h2 class="manage-posts-title">Manage Users</h2>
+        <ul class="admin-list">
+            {{#each users}}
+            <li class="admin-item">
+                <p><strong>{{full_name}}</strong></p>
+                <p>({{email}})</p>
+                <div class="admin-actions">
+                    <form action="/update-user/{{id}}" method="POST">
+                        <input type="text" name="full_name" placeholder="New Name">
+                        <input type="email" name="email" placeholder="New Email">
+                        <input type="password" name="password" placeholder="New Password">
+                        <button type="submit" class="btn-edit">Update</button>
+                    </form>
+                    <form action="/delete-user/{{id}}" method="POST" onsubmit="return confirm('Delete user?');">
+                        <button type="submit" class="btn-delete">Delete</button>
+                    </form>
+                </div>
+            </li>
+            {{/each}}
+        </ul>
     </div>
 
-    <div id="spacer"></div>
+    <!-- Right: Post List (Centered & Larger) -->
+    <div class="admin-section admin-posts">
+        <h2 class="manage-posts-title">Manage Posts</h2>
+        <ul class="admin-list">
+            {{#each posts}}
+            <li class="admin-item">
+                <!-- Profile Picture & Username (Now properly aligned) -->
+                <div class="post-header">
+                    <img src="{{#if profile_photo}}{{profile_photo}}{{else}}/uploads/default-profile.png{{/if}}" 
+                        alt="Profile Picture" class="admin-profile-pic">
+                    <strong class="admin-username">{{post_user}}</strong>
+                </div>
+
+                <!-- Post Content -->
+                <p class="post-content">{{post_content}}</p>
+
+                <!-- Post Image/Video -->
+                {{#if post_image}}
+                <div class="post-media">
+                    <img src="{{post_image}}" alt="Post Image" class="post-image"/>
+                </div>
+                {{/if}}
+
+                {{#if post_video}}
+                <div class="post-media">
+                    <video controls class="post-video">
+                        <source src="{{post_video}}" type="video/mp4"/>
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                {{/if}}
+
+                <!-- Admin Actions -->
+                <div class="admin-actions">
+                    <form action="/delete-post/{{id}}" method="POST" onsubmit="return confirm('Delete post?');">
+                        <button type="submit" class="btn-delete">Delete</button>
+                    </form>
+                </div>
+            </li>
+            {{/each}}
+        </ul>
+    </div>
 </div>

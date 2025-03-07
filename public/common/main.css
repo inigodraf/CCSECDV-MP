@@ -254,81 +254,139 @@ main {
     color: #000000; /* Black text on hover */
 }
 
-/* Admin Dashboard Layout */
-.admin-container {
+
+/*------------------------------------------ADMIN----------------------------------*/
+
+/* Admin Container */
+#admin-container {
     display: flex;
-    justify-content: space-between;
-    gap: 20px;
+    justify-content: center;
+    gap: 40px;
     padding: 20px;
-    max-width: 1000px;
-    margin: auto;
 }
 
-/* Sections for Users and Posts */
+/* Admin Sections */
 .admin-section {
-    flex: 1;
-    background-color: #111;
-    padding: 15px;
-    border-radius: 10px;
-    border: 2px solid #fff;
-    box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    border-radius: 8px;
+    border: 2px solid #555;
 }
 
-/* Titles */
-.admin-section h2 {
+/* Manage Users (Left Side) */
+.admin-users {
+    width: 40%;
+}
+
+/* Manage Posts (Right Side - Now Centered & Larger) */
+.admin-posts {
+    width: 60%;
+    text-align: center;
+}
+
+/* Manage Posts Title */
+.manage-posts-title {
+    font-size: 28px;
+    font-weight: bold;
     text-align: center;
     margin-bottom: 15px;
-    color: #fff;
 }
 
-/* User & Post Lists */
-.user-list, .post-list {
+/* List Styling */
+.admin-list {
     list-style: none;
     padding: 0;
 }
 
-/* List Items */
-.user-list li, .post-list li {
-    padding: 10px;
-    border-bottom: 1px solid #333;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* Individual Admin Items */
+.admin-item {
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #666;
+    border-radius: 8px;
 }
 
-/* User and Post Info */
-.user-info, .post-info {
+/* Post Header (Profile Picture & Username Beside Each Other) */
+.post-header {
     display: flex;
-    justify-content: space-between;
-    width: 100%;
-    color: #fff;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+/* Profile Picture */
+.admin-profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+/* Username Styling */
+.admin-username {
+    font-size: 15px;
+    font-weight: bold;
+    color: white;
+    flex-grow: 1;
+    text-align: left;
+}
+
+/* Post Content */
+.post-content {
+    font-size: 14px;
+    color: #ddd;
+    margin-bottom: 10px;
+}
+
+/* Post Media */
+.post-media {
+    margin-bottom: 10px;
+}
+
+/* Post Image */
+.post-image {
+    max-width: 100%;
+    border-radius: 5px;
+}
+
+/* Post Video */
+.post-video {
+    max-width: 100%;
+    border-radius: 5px;
 }
 
 /* Admin Action Buttons */
 .admin-actions {
     display: flex;
+    justify-content: center;
     gap: 10px;
+    margin-top: 10px;
 }
 
-/* Edit and Delete Buttons */
-.btn-edit, .btn-delete {
-    padding: 8px 12px;
-    border: 2px solid #fff;
-    background-color: #222;
-    color: #fff;
-    border-radius: 5px;
+/* Buttons */
+.btn-edit,
+.btn-delete {
+    border: 2px solid white;
     cursor: pointer;
-    transition: 0.3s;
     font-size: 14px;
+    border-radius: 5px;
+    transition: 0.3s ease;
 }
 
-/* Button Hover Effects */
-.btn-edit:hover {
-    background-color: #4CAF50;
+.btn-edit {
     color: white;
 }
 
-.btn-delete:hover {
-    background-color: #f44336;
+.btn-delete {
     color: white;
+}
+
+/* Admin Dashboard Title */
+.admin-title {
+    text-align: center;
+    font-size: 36px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 20px;
 }
