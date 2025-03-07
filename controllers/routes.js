@@ -113,7 +113,7 @@ function init(server) {
         cookie: { secure: false, maxAge: sessionTimeout }
     }));
 
-    server.use('/read-user', limiter);
+    server.use('/login', limiter);
 
     server.use((req, res, next) => {
         if (req.session.lastActivity && Date.now() - req.session.lastActivity > sessionTimeout) {
@@ -193,7 +193,8 @@ function init(server) {
         res.render('login', {
             layout: 'index',
             title: 'Login to re*curate',
-            style: 'form.css'
+            style: 'form.css',
+            message: null
         });
     });
     
@@ -353,11 +354,11 @@ function init(server) {
     
                     console.log(`✅ New User Registered - Name: ${full_name}, Email: ${email}, Phone: ${phone}`);
     
-                    req.session.logged_in = true;
+                    req.session.logged_in = false;
                     req.session.user = full_name;
                     req.session.is_admin = false;
     
-                    return res.redirect('/');
+                    return res.redirect('/login');
                 });
             });
         });
@@ -408,46 +409,78 @@ function init(server) {
     server.post('/update-user/:id', checkAdmin, (req, res) => {
         const userId = req.params.id;
         const { full_name, email, password } = req.body;
-
+    
         // Fetch current user data first
-        db.get(`SELECT full_name, email, password FROM users WHERE id = ?`, [userId], (err, user) => {
+        db.get(`SELECT full_name, email FROM users WHERE id = ?`, [userId], (err, user) => {
             if (err) {
                 console.error("❌ Error fetching user data:", err.message);
                 return res.status(500).send("Error fetching user data.");
             }
-
+    
             if (!user) {
+                console.log("❌ Attempt to update non-existing user:", userId);
                 return res.status(404).send("User not found.");
             }
-
-            // Use the existing values if the field is not provided
-            const newFullName = full_name.trim() !== '' ? full_name : user.full_name;
-            const newEmail = email.trim() !== '' ? email : user.email;
-            const newPassword = password.trim() !== '' ? bcrypt.hashSync(password, 10) : user.password;
-
-            // Update only modified fields
-            db.run(
-                `UPDATE users SET full_name = ?, email = ?, password = ? WHERE id = ?`,
-                [newFullName, newEmail, newPassword, userId],
-                (updateErr) => {
-                    if (updateErr) {
-                        console.error("❌ Error updating user:", updateErr.message);
-                        return res.status(500).send("Error updating user.");
-                    }
-
-                    console.log(`✅ User ${userId} updated successfully.`);
-                    res.redirect('/admin');
+    
+            // Store old values for logging
+            const oldFullName = user.full_name;
+            const oldEmail = user.email;
+    
+            // Use new values if provided, otherwise keep the old ones
+            const newFullName = full_name.trim() !== '' ? full_name : oldFullName;
+            const newEmail = email.trim() !== '' ? email : oldEmail;
+            const newPassword = password.trim() !== '' ? bcrypt.hashSync(password, saltRounds) : null;
+    
+            let updateQuery = `UPDATE users SET full_name = ?, email = ?`;
+            let updateParams = [newFullName, newEmail];
+    
+            if (newPassword) {
+                updateQuery += `, password = ?`;
+                updateParams.push(newPassword);
+            }
+    
+            updateQuery += ` WHERE id = ?`;
+            updateParams.push(userId);
+    
+            db.run(updateQuery, updateParams, (updateErr) => {
+                if (updateErr) {
+                    console.error("❌ Error updating user:", updateErr.message);
+                    return res.status(500).send("Error updating user.");
                 }
-            );
+    
+                console.log(`✅ User ${userId} updated successfully.`);
+    
+                // Log what was changed
+                let logMessage = `User updated (ID: ${userId}) - `;
+                if (oldFullName !== newFullName) logMessage += `Full Name: "${oldFullName}" → "${newFullName}", `;
+                if (oldEmail !== newEmail) logMessage += `Email: "${oldEmail}" → "${newEmail}", `;
+                if (newPassword) logMessage += `Password: [Updated]`;
+    
+                logAction(logMessage.trim(), "Admin");
+    
+                res.redirect('/admin');
+            });
         });
     });
-
+    
 
     /**
      * ✅ Delete User (Admin Only)
      */
     server.post('/delete-user/:id', checkAdmin, (req, res) => {
         const userId = req.params.id;
+        db.get(`SELECT email FROM users WHERE id = ?`, [userId], (err, row) => {
+            if (err) {
+                console.error("❌ Error fetching user for deletion:", err.message);
+                return res.status(500).send("Error fetching user details.");
+            }
+    
+            if (!row) {
+                console.log("❌ Attempt to delete non-existing user:", userId);
+                return res.status(404).send("User not found.");
+            }
+    
+            const deletedUserEmail = row.email;
 
         db.run(`DELETE FROM users WHERE id = ?`, [userId], (err) => {
             if (err) {
@@ -456,26 +489,11 @@ function init(server) {
             }
 
             console.log(`✅ User ${userId} deleted successfully.`);
+            logAction(`User deleted (ID: ${userId}, Email: ${deletedUserEmail})`, "Admin");
+
             res.redirect('/admin');
         });
     });
-
-    /**
-     * ✅ Update Post (Admin Only)
-     */
-    server.post('/update-post/:id', checkAdmin, (req, res) => {
-        const postId = req.params.id;
-        const { post_content } = req.body;
-
-        db.run(`UPDATE posts SET post_content = ? WHERE id = ?`, [post_content, postId], (err) => {
-            if (err) {
-                console.error("❌ Error updating post:", err.message);
-                return res.status(500).send("Error updating post.");
-            }
-
-            console.log(`✅ Post ${postId} updated successfully.`);
-            res.redirect('/admin');
-        });
     });
 
     /**
@@ -634,11 +652,23 @@ server.post('/delete-post/:id', (req, res) => {
 server.get('/edit-post/:id', (req, res) => {
     const postId = req.params.id;
     const userId = req.session.user_id;
+    const isAdmin = req.session.is_admin;
 
-    db.get(`SELECT * FROM posts WHERE id = ? AND user_id = ?`, [postId, userId], (err, post) => {
-        if (err || !post) {
-            console.error("❌ Error retrieving post for editing:", err ? err.message : "Unauthorized attempt.");
-            return res.status(403).send("Unauthorized action or post not found.");
+    db.get(`SELECT * FROM posts WHERE id = ?`, [postId], (err, post) => {
+        if (err) {
+            console.error("❌ Error retrieving post for editing:", err.message);
+            return res.status(500).send("Database error.");
+        }
+
+        if (!post) {
+            console.log("❌ Post not found:", postId);
+            return res.status(404).send("Post not found.");
+        }
+
+        // Allow if user is the post owner or is an admin
+        if (post.user_id !== userId && !isAdmin) {
+            console.log("❌ Unauthorized access attempt by user:", userId);
+            return res.status(403).send("Unauthorized action.");
         }
 
         res.render('edit-post', {
@@ -653,26 +683,42 @@ server.get('/edit-post/:id', (req, res) => {
 // UPDATE POST - Only owner can update
 server.post('/update-post/:id', (req, res) => {
     const postId = req.params.id;
-    const userId = req.session.user_id;
+    const userId = req.session.user_id; // Logged-in user
     const updatedContent = req.body.post_content;
 
-    db.get(`SELECT * FROM posts WHERE id = ? AND user_id = ?`, [postId, userId], (err, post) => {
-        if (err || !post) {
-            console.error("❌ Error retrieving post for update:", err ? err.message : "Unauthorized attempt.");
-            return res.status(403).send("Unauthorized action or post not found.");
-        }
-
+    // Check if the user is an admin
+    if (req.session.is_admin) {
+        // Admins can update any post
         db.run(`UPDATE posts SET post_content = ? WHERE id = ?`, [updatedContent, postId], (err) => {
             if (err) {
                 console.error("❌ Error updating post:", err.message);
                 return res.status(500).send("Error updating post.");
             }
-
-            console.log(`✅ Post ${postId} updated by user ${userId}`);
-            res.redirect('/main');
+            console.log(`✅ Post ${postId} updated by admin.`);
+            res.redirect('/admin');
         });
-    });
+    } else {
+        // Non-admins can only update their own posts
+        db.get(`SELECT * FROM posts WHERE id = ? AND user_id = ?`, [postId, userId], (err, post) => {
+            if (err || !post) {
+                console.error("❌ Unauthorized attempt to update post:", postId);
+                return res.status(403).send("Unauthorized action.");
+            }
+
+            db.run(`UPDATE posts SET post_content = ? WHERE id = ?`, [updatedContent, postId], (updateErr) => {
+                if (updateErr) {
+                    console.error("❌ Error updating post:", updateErr.message);
+                    return res.status(500).send("Error updating post.");
+                }
+
+                console.log(`✅ Post ${postId} updated by user ${userId}`);
+                res.redirect('/main');
+            });
+        });
+    }
 });
+
+
 
 
 }

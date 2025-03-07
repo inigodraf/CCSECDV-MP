@@ -3,7 +3,7 @@
     <div id="spacer"></div>
     <div class="post-card">
         <p>{{message}}</p>
-        <form action="/" method="get">
+            <form action="{{#if message}}/login{{else}}/{{/if}}" method="get">
             <button type="submit" class="btn">Okay</button>
         </form>
     </div>
