@@ -89,3 +89,246 @@ main {
     vertical-align: middle;
     border-radius: 2px;
 }
+
+.post-creation {
+    margin-bottom: 30px;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.post-creation textarea {
+    width: 100%;
+    height: 120px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.post-creation input[type="file"] {
+    margin-bottom: 15px;
+    padding: 8px;
+}
+
+.post-creation button {
+    padding: 12px 25px;
+    background-color: #a2a2a2;
+    color: hsl(0, 0%, 5%);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.post-creation button:hover {
+    background-color: #45a049;
+}
+
+/* Styling for the Post Card */
+.post-card {
+    padding: 20px;
+    background-color: hsl(0, 0%, 5%);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.post-card:hover {
+    transform: scale(1.02);
+}
+
+/* Styling for the Post Header */
+.post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+/* Clickable Profile Picture */
+.post-header a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.profile-pic {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-right: 15px;
+    border: 2px solid #ffffff;
+    transition: transform 0.2s ease-in-out;
+}
+
+.profile-pic:hover {
+    transform: scale(1.1);
+}
+
+/* Clickable Username */
+.post-username {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 0;
+    color: #ffffff;
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+.post-username:hover {
+    color: #1e90ff;
+}
+
+/* Post Store Link Style */
+.post-store {
+    display: inline-block;
+    font-size: 1.1em;
+    color: #0066cc;
+    text-decoration: none;
+    margin-bottom: 10px;
+}
+
+.post-store:hover {
+    text-decoration: underline;
+}
+
+/* Post Content Styling */
+.post-content {
+    font-size: 1.1em;
+    color: #ffffff;
+    margin-bottom: 15px;
+}
+
+/* Post Image and Video Styling */
+.post-image, .post-video {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+/* Styling for the pictures */
+.pictures img, .pictures video {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.post-header-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-grow: 1;
+    justify-content: space-between;
+}
+
+.post-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-edit, .btn-delete {
+    padding: 5px 10px;
+    border: 1px solid #ffffff; /* White border */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer;
+    font-size: 14px;
+    background-color: transparent; /* Transparent background */
+    color: #ffffff; /* White text */
+    transition: all 0.3s ease-in-out;
+}
+
+/* Hover effect */
+.btn-edit:hover, .btn-delete:hover {
+    background-color: #ffffff; /* White background on hover */
+    color: #000000; /* Black text on hover */
+}
+
+/* Admin Dashboard Layout */
+.admin-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px;
+    max-width: 1000px;
+    margin: auto;
+}
+
+/* Sections for Users and Posts */
+.admin-section {
+    flex: 1;
+    background-color: #111;
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid #fff;
+    box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Titles */
+.admin-section h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #fff;
+}
+
+/* User & Post Lists */
+.user-list, .post-list {
+    list-style: none;
+    padding: 0;
+}
+
+/* List Items */
+.user-list li, .post-list li {
+    padding: 10px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* User and Post Info */
+.user-info, .post-info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    color: #fff;
+}
+
+/* Admin Action Buttons */
+.admin-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Edit and Delete Buttons */
+.btn-edit, .btn-delete {
+    padding: 8px 12px;
+    border: 2px solid #fff;
+    background-color: #222;
+    color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-size: 14px;
+}
+
+/* Button Hover Effects */
+.btn-edit:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #f44336;
+    color: white;
+}

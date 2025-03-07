@@ -1,0 +1,36 @@
+{{> header}}
+
+<div id="content">
+    <div id="spacer"></div>
+    <div class="post-card">
+        <h1>Edit Post</h1>
+
+        <form action="/update-post/{{post.id}}" method="POST">
+            <div class="form-group">
+                <label for="post_content">Edit your post:</label>
+                <textarea id="post_content" name="post_content" required>{{post.post_content}}</textarea>
+            </div>
+
+            <!-- Display current image -->
+            {{#if post.post_image}}
+            <div class="post-image-container">
+                <img src="{{post.post_image}}" alt="Current Image" class="post-image-preview"/>
+            </div>
+            {{/if}}
+
+            <!-- Display current video -->
+            {{#if post.post_video}}
+            <div class="post-video-container">
+                <video controls class="post-video-preview">
+                    <source src="{{post.post_video}}" type="video/mp4"/>
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            {{/if}}
+
+            <button type="submit" class="btn-edit">Save Changes</button>
+            <a href="/main" class="btn-delete">Cancel</a>
+        </form>
+    </div>
+    <div id="spacer"></div>
+</div>

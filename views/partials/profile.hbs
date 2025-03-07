@@ -1,0 +1,117 @@
+<div class="profile-container">
+    <div class="profile-header">
+        <!-- Profile Picture and Upload -->
+        <form action="/update-profile-pic" method="POST" enctype="multipart/form-data" class="profile-picture-form">
+            <label for="profile-upload">
+                <img src="{{#if user.profile_photo}}{{user.profile_photo}}{{else}}/uploads/default-profile.png{{/if}}" 
+                     alt="Profile Picture" class="profile-pic">
+            </label>
+            <input type="file" name="profile_photo" id="profile-upload" class="hidden-input">
+            <button type="submit" class="update-pic-btn">Update Picture</button>
+        </form>
+
+        <!-- User Details -->
+        <h1 class="profile-name">{{user.full_name}}</h1>
+        <p class="profile-email">{{user.email}}</p>
+    </div>
+
+    <hr>
+
+    <div class="user-posts">
+        <h2>Posts</h2>
+        {{#each posts}}
+        <div class="post-card">
+            <p class="post-content">{{post_content}}</p>
+            {{#if post_image}}
+                <img src="{{post_image}}" alt="Post Image" class="post-image">
+            {{/if}}
+            {{#if post_video}}
+                <video controls class="post-video">
+                    <source src="{{post_video}}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            {{/if}}
+        </div>
+        {{else}}
+        <p>No posts yet.</p>
+        {{/each}}
+    </div>
+</div>
+
+<style>
+    .profile-container {
+        max-width: 700px;
+        margin: 30px auto;
+        padding: 20px;
+        background-color: #222;
+        color: white;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .profile-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .profile-pic {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid white;
+        cursor: pointer;
+    }
+
+    .hidden-input {
+        display: none;
+    }
+
+    .update-pic-btn {
+        margin-top: 10px;
+        padding: 8px 15px;
+        border: none;
+        background-color: #444;
+        color: white;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+
+    .update-pic-btn:hover {
+        background-color: #666;
+    }
+
+    .profile-name {
+        margin-top: 10px;
+        font-size: 24px;
+    }
+
+    .profile-email {
+        font-size: 14px;
+        color: #bbb;
+    }
+
+    .user-posts {
+        text-align: left;
+    }
+
+    .post-card {
+        background-color: #333;
+        padding: 15px;
+        margin-top: 15px;
+        border-radius: 8px;
+    }
+
+    .post-content {
+        font-size: 16px;
+    }
+
+    .post-image, .post-video {
+        width: 100%;
+        max-height: 400px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+</style>

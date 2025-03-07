@@ -1,22 +1,79 @@
-<!-- To put files in each other -->
-<!-- TODO: EDIT -->
+<!-- Main Layout with Post Creation Section -->
 <div class="body-parent">
     {{> header}}
     <hr>
     <div id="content">
         {{> favorite}}
-        <!-- MAIN HERE, use #each data -->
+
         <main>
-            {{#each post_data}}
-            <div class="post-card">
-                <a href="/store/{{post_store}}">{{post_store}}</a>
-                <h1>{{post_user}}</h1>
-                <p>{{post_content}}</p>
-                <div class="pictures">
-                    <img src="{{post_image}}"/>
-                </div>
+            <!-- POST CREATION FORM -->
+            <div class="post-creation">
+                <form action="/create-post" method="POST" enctype="multipart/form-data">
+                    <textarea name="post_content" placeholder="What's on your mind?" required></textarea>
+
+                    <!-- File Upload Section (Image or Video) -->
+                    <label for="file-upload">Upload Image/Video</label>
+                    <input type="file" name="file_upload" accept="image/*, video/*" id="file-upload"/>
+
+                    <!-- Submit Button -->
+                    <button type="submit">Post</button>
+                </form>
             </div>
-            {{/each}}
+
+           {{#each post_data}}
+<div class="post-card">
+    <div class="post-header">
+        <!-- Profile Picture -->
+        <a href="/profile/{{post_email}}">
+            <img src="{{#if profile_photo}}{{profile_photo}}{{else}}/uploads/default-profile.png{{/if}}" 
+                alt="Profile Picture" class="profile-pic">
+        </a>
+
+        <!-- Username and Buttons Container -->
+        <div class="post-header-info">
+            <a href="/profile/{{post_email}}" class="post-username">{{post_user}}</a>
+
+            <!-- If logged-in user is the post owner, show Edit/Delete buttons -->
+            {{#if (eq ../user_id this.user_id)}}
+            <div class="post-actions">
+                <form action="/edit-post/{{id}}" method="GET">
+                    <button type="submit" class="btn-edit">Edit</button>
+                </form>
+                <form action="/delete-post/{{id}}" method="POST" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                    <button type="submit" class="btn-delete">Delete</button>
+                </form>
+            </div>
+        {{/if}}
+
+
+        </div>
+    </div>
+
+    <!-- Post Content -->
+    <p class="post-content">{{post_content}}</p>
+
+    <!-- Centered Post Image -->
+    {{#if post_image}}
+    <div class="post-image-container">
+        <img src="{{post_image}}" alt="Post Image" class="post-image"/>
+    </div>
+    {{/if}}
+
+    {{#if post_video}}
+    <div class="post-video-container">
+        <video controls class="post-video">
+            <source src="{{post_video}}" type="video/mp4"/>
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    {{/if}}
+</div>
+
+
+{{/each}}
+
+
         </main>
         {{> sidebar}}
+    </div>
 </div>
